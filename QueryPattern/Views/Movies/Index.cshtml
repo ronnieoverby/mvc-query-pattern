@@ -1,4 +1,5 @@
-﻿@model IEnumerable<QueryPattern.Models.Movie>
+﻿@using System.Globalization
+@model QueryPattern.Models.MoviesViewModel
 
 @{
     ViewBag.Title = "Movies";
@@ -9,6 +10,7 @@
 <table class="table table-bordered">
     <thead>
         <tr>
+            @*sorting*@
             @foreach (var col in new[] { "Id", "Title", "Year" })
             {
                 <th>
@@ -18,7 +20,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var movie in Model)
+        @foreach (var movie in Model.Movies)
         {
             <tr>
                 <td>@movie.Id</td>
@@ -28,3 +30,16 @@
         }
     </tbody>
 </table>
+
+@*paging*@
+<div>
+    @for (var i = 1; i <= Model.TotalPages; i++)
+    {
+        var style = i == Model.Page ? "font-weight: bold" : "";
+        @Html.ActionLink(i.ToString(CultureInfo.InvariantCulture), "Page", new { page = i } ,new {style})
+        if (i != Model.TotalPages)
+        {
+            @(" | ")
+        }
+    }
+</div>

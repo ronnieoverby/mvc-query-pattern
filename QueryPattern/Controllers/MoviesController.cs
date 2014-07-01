@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+
 using System.Web.Mvc;
+using QueryPattern.Infrastructure;
 using QueryPattern.Models;
 
 namespace QueryPattern.Controllers
@@ -21,8 +24,8 @@ namespace QueryPattern.Controllers
 
         public ActionResult Index()
         {
-            var movies = ExecuteMoviesQuery(Query);
-            return View(movies);
+            Query.Page = 1;
+            return IndexView();
         }
 
         public ActionResult Sort(string property)
@@ -39,12 +42,23 @@ namespace QueryPattern.Controllers
                 Query.SortDescending = false;
             }
 
-
-            var movies = ExecuteMoviesQuery(Query);
-            return View("Index", movies);
+            return IndexView();
         }
 
-        private static Movie[] ExecuteMoviesQuery(MoviesQuery moviesQuery)
+
+        public ActionResult Page(int page)
+        {
+            Query.Page = page;
+            return IndexView();
+        }
+
+        private ActionResult IndexView()
+        {
+            var model = ExecuteMoviesQuery(Query);
+            return View("Index", model);
+        }
+
+        private static MoviesViewModel ExecuteMoviesQuery(MoviesQuery moviesQuery)
         {
             var query = FakeDatabase.Movies.AsQueryable();
 
@@ -56,8 +70,8 @@ namespace QueryPattern.Controllers
                 query = query.Where(x => x.Year == moviesQuery.Year);
 
             // sorting
-            moviesQuery.Sort = moviesQuery.Sort ?? "";
-            switch (moviesQuery.Sort.ToLowerInvariant())
+            var sort = moviesQuery.Sort ?? "";
+            switch (sort.ToLowerInvariant())
             {
                 case "title":
                     query = moviesQuery.SortDescending
@@ -78,34 +92,20 @@ namespace QueryPattern.Controllers
                     break;
             }
 
+            var totalMovieCount = query.Count();
+
             // paging
-            if (moviesQuery.Skip.HasValue)
-                query = query.Skip(moviesQuery.Skip.Value);
+            query = query.Page(moviesQuery.Page, moviesQuery.PageSize);
+            var movies = query.ToArray();
 
-            if (moviesQuery.Take.HasValue)
-                query = query.Take(moviesQuery.Take.Value);
+            return new MoviesViewModel
+            {
+                Movies = movies,
+                Page = moviesQuery.Page,
+                PageSize=moviesQuery.PageSize,
+                TotalMovieCount = totalMovieCount
+            };
 
-            return query.ToArray();
-        }
-    }
-
-    public class MoviesQuery
-    {
-        // filters
-        public string Title { get; set; }
-        public int? Year { get; set; }
-
-        // sorting
-        public string Sort { get; set; }
-        public bool SortDescending { get; set; }
-
-        // paging
-        public int? Skip { get; set; }
-        public int? Take { get; set; }
-
-        public MoviesQuery()
-        {
-            Sort = "Id";
         }
 
     }

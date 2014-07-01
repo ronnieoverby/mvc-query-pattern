@@ -34,6 +34,12 @@ namespace QueryPattern.Models
                 Title = "Every Which Way But Loose",
                 Year = 1978
             },
+            new Movie
+            {
+                Id = NextId(),
+                Title = "Edge of Tomorrow",
+                Year = 2014
+            },
 
         };
 
